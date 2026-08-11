@@ -31,6 +31,18 @@ captr's core has **no Python dependencies**. It needs, on the system:
 
 ## Quick start (how to test it)
 
+With the Makefile (venv + captr + a whisper backend + an ffmpeg/libass check):
+
+```bash
+make install                                  # venv + captr + faster-whisper + ffmpeg check
+make whispr                                   # clone the sibling whispr if you don't have it
+make burn VIDEO=myclip.mp4 STYLE=pop          # animated word-by-word subtitles
+make check                                    # sanity-check imports, styles and CLI
+```
+
+`make help` lists every target. On Python ≥ 3.13, `make install` also adds
+`audioop-lts` (which `pydub` needs there). Manual setup instead:
+
 ```bash
 # 1. get whispr (captr drives it) and a backend
 git clone https://github.com/franckferman/whispr
