@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "captr"
+version = "0.1.0"
+description = "Burn styled subtitles onto a video (whispr + libass)."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{ name = "franckferman" }]
+# Core has no Python deps; ffmpeg and a whispr clone are external requirements.
+dependencies = []
+
+[project.scripts]
+captr = "captr.cli:main"
+
+[tool.setuptools]
+packages = ["captr", "captr.styles"]

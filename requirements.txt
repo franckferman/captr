@@ -1,0 +1,8 @@
+# captr's core has no Python dependencies -- it shells out to ffmpeg/ffprobe
+# and drives whispr as a subprocess.
+#
+# External requirements (not pip-installable here):
+#   - ffmpeg + ffprobe built with libass (the 'ass' filter)
+#   - a whispr clone (https://github.com/franckferman/whispr), pointed to with
+#     --whispr or $WHISPR_DIR, plus whichever whispr backend you use
+#     (e.g. faster-whisper).
