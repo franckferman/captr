@@ -4,17 +4,23 @@
 """
 Style presets registry.
 
-Each preset is a StyleSpec (see captr.ass). The 'pop' word-by-word animated
-style is planned next and will consume word-level timestamps.
+Each preset is a StyleSpec (see captr.ass). A preset with word_level=True (the
+'pop' family) renders per-word karaoke and makes captr request word timestamps
+from whispr automatically.
 """
 
 from captr.ass import StyleSpec
 from captr.styles.film import FILM
 from captr.styles.translation import TRANSLATION
+from captr.styles.pop import POP
+from captr.styles.vertical import FILM_VERTICAL, POP_VERTICAL
 
 STYLES = {
     "film": FILM,
     "translation": TRANSLATION,
+    "pop": POP,
+    "film-vertical": FILM_VERTICAL,
+    "pop-vertical": POP_VERTICAL,
 }
 
 DEFAULT_STYLE = "film"

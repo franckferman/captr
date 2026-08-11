@@ -21,17 +21,38 @@ video ──▶ whispr (ASR + optional translation, word timings) ──▶ capt
 captr does **not** re-implement speech recognition — that is whispr's job. captr
 owns what whispr doesn't: **the look**.
 
-## Install
+## Requirements
 
-captr's core has no Python dependencies. It needs, on the system:
+captr's core has **no Python dependencies**. It needs, on the system:
 
 - **ffmpeg / ffprobe** built with libass (the `ass` filter)
 - a **whispr** clone, pointed to with `--whispr` or `$WHISPR_DIR`, plus a whispr
   backend (e.g. `pip install faster-whisper`)
 
+## Quick start (how to test it)
+
 ```bash
-git clone https://github.com/franckferman/whispr   # captr drives this
+# 1. get whispr (captr drives it) and a backend
+git clone https://github.com/franckferman/whispr
 export WHISPR_DIR=$PWD/whispr
+
+# 2. install captr (exposes the `captr` command) and a whispr backend
+cd captr
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e .
+pip install faster-whisper
+
+# 3. run it on any short video
+captr myclip.mp4 --style film --lang en -o out.mp4        # clean subtitles
+captr myclip.mp4 --style pop  --lang en -o out_pop.mp4    # animated word-by-word
+```
+
+No video handy? Make a 3-second test clip with speech:
+
+```bash
+espeak-ng -w a.wav "Captr burns styled subtitles onto a video."
+ffmpeg -f lavfi -i color=c=0x102030:s=1280x720 -i a.wav -shortest -pix_fmt yuv420p clip.mp4
+captr clip.mp4 --style pop --lang en -o out.mp4
 ```
 
 ## Usage
@@ -40,10 +61,21 @@ export WHISPR_DIR=$PWD/whispr
 # Clean cinematic subtitles
 captr talk.mp4 --style film --lang en -o subtitled.mp4
 
+# Animated word-by-word captions (TikTok/Reels) -- uses whispr word timings
+captr talk.mp4 --style pop --lang en -o captions.mp4
+# ...with premium word alignment (needs whispr's align extra)
+captr talk.mp4 --style pop --lang en --word-provider stable_ts -o captions.mp4
+
 # Translate, then subtitle in the target language
 captr talk.mp4 --style translation --lang en --translate-to fr -o sous-titre.mp4
 
-# Just emit the .ass (no burn) to tweak by hand
+# Soft, toggleable subtitle track instead of burning (Matroska)
+captr talk.mp4 --style film --soft -o soft.mkv
+
+# Vertical 9:16 footage (Shorts/Reels safe area)
+captr short.mp4 --style pop-vertical --lang en -o short_captions.mp4
+
+# Just emit the .ass to tweak by hand
 captr talk.mp4 --style film --ass-only
 ```
 
@@ -54,11 +86,15 @@ Or as a module: `python -m captr.cli video.mp4 --style film`.
 | Preset | Look |
 |---|---|
 | `film` | bottom-centred, clean sans-serif, white + thin outline — cinematic, out of the way |
-| `translation` | like `film`, a touch smaller/dimmer — reads as a discreet translated overlay |
-| `pop` *(planned)* | word-by-word animated captions (TikTok/Reels), active word highlighted |
+| `translation` | like `film`, a touch smaller/dimmer — a discreet translated overlay |
+| `pop` | big bold centred, **word-by-word animated** (karaoke), active word highlighted |
+| `film-vertical` | `film` raised into the 9:16 safe area |
+| `pop-vertical` | `pop`, sized and raised for vertical video |
 
 A style is a `StyleSpec` (`captr/ass.py`): font, size, colours, outline,
-position. Adding one is a few lines.
+position, and `word_level`. Adding one is a few lines. Word-animated styles
+(`word_level=True`) make captr request per-word timestamps from whispr
+automatically.
 
 ## How it works
 
@@ -72,10 +108,12 @@ position. Adding one is a few lines.
 ## Roadmap
 
 - [x] `film` / `translation` presets (segment-level), end-to-end burn
-- [ ] `pop` — animated word-by-word captions, consuming whispr's
+- [x] `pop` — animated word-by-word captions, consuming whispr's
       `--word-timestamps` (native or stable_ts/whisperx alignment)
-- [ ] soft-subtitle output (mux `.ass`/`.srt` instead of burning)
-- [ ] vertical (9:16) safe-area presets
+- [x] soft-subtitle output (`--soft`, mux `.ass` into Matroska instead of burning)
+- [x] vertical (9:16) safe-area presets (`film-vertical`, `pop-vertical`)
+- [ ] per-word "one word at a time" pop variant (vs cumulative karaoke)
+- [ ] `.srt` soft-sub export for players without ASS
 
 ## License
 

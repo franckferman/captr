@@ -72,3 +72,39 @@ def burn(video: str, ass_path: str, out_path: str, *, crf: int = 18) -> str:
             f"stderr: {proc.stderr[-800:]}"
         )
     return out_path
+
+
+def mux_soft(video: str, ass_path: str, out_path: str) -> str:
+    """
+    Mux ``ass_path`` as a *soft* (toggleable) subtitle track — no re-encode.
+
+    ASS keeps its styling only in a Matroska container, so ``out_path`` should
+    be a .mkv; video and audio are stream-copied. Returns out_path.
+
+    Raises:
+        RuntimeError: if ffmpeg exits non-zero.
+    """
+    if not Path(video).is_file():
+        raise FileNotFoundError(f"Video not found: {video}")
+    if not Path(ass_path).is_file():
+        raise FileNotFoundError(f"ASS file not found: {ass_path}")
+    if not out_path.lower().endswith(".mkv"):
+        logger.warning(
+            "Soft ASS subtitles need a Matroska (.mkv) container to keep their "
+            "styling; got '%s'.", out_path,
+        )
+
+    cmd = [
+        "ffmpeg", "-y", "-i", video, "-i", ass_path,
+        "-map", "0", "-map", "1",
+        "-c", "copy",
+        out_path,
+    ]
+    logger.info("Muxing soft subtitles: %s", " ".join(cmd))
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"ffmpeg soft-mux failed (exit {proc.returncode}).\n"
+            f"stderr: {proc.stderr[-800:]}"
+        )
+    return out_path

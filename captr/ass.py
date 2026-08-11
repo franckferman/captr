@@ -31,7 +31,8 @@ class StyleSpec:
     name: str
     fontname: str = "Arial"
     fontsize: int = 48
-    primary_colour: str = "&H00FFFFFF"   # white text
+    primary_colour: str = "&H00FFFFFF"   # text colour (and karaoke 'sung' colour)
+    secondary_colour: str = "&H000000FF"  # karaoke upcoming-word colour
     outline_colour: str = "&H00000000"   # black outline
     back_colour: str = "&H64000000"      # semi-transparent shadow box
     bold: int = 0                        # -1 = bold, 0 = normal
@@ -42,12 +43,14 @@ class StyleSpec:
     margin_l: int = 40
     margin_r: int = 40
     margin_v: int = 40
+    # True if this preset renders per-word (karaoke) and thus needs word timings.
+    word_level: bool = False
 
     def to_style_line(self) -> str:
         """Render the ASS 'Style:' line for the [V4+ Styles] section."""
         fields = [
             self.name, self.fontname, self.fontsize,
-            self.primary_colour, "&H000000FF", self.outline_colour, self.back_colour,
+            self.primary_colour, self.secondary_colour, self.outline_colour, self.back_colour,
             self.bold, self.italic, 0, 0,          # Bold, Italic, Underline, StrikeOut
             100, 100, 0, 0,                        # ScaleX, ScaleY, Spacing, Angle
             1,                                     # BorderStyle: 1 = outline+shadow
@@ -96,26 +99,47 @@ def escape_text(text: str) -> str:
     )
 
 
+def _karaoke_text(words: List[dict]) -> str:
+    """
+    Build an ASS karaoke line from word dicts: '{\\kN}word ' per word.
+
+    Each word stays in the style's secondary colour until its turn, then flips
+    to the primary colour -- libass animates this word-by-word, in sync with the
+    per-word timings from whispr.
+    """
+    parts: List[str] = []
+    for w in words:
+        dur_cs = max(1, int(round((float(w["end"]) - float(w["start"])) * 100)))
+        token = escape_text(str(w.get("word", "")))
+        if not token:
+            continue
+        parts.append("{\\k%d}%s" % (dur_cs, token))
+    return " ".join(parts)
+
+
 def build_ass(
     segments: List[dict],
     style: StyleSpec,
     width: int,
     height: int,
     title: Optional[str] = None,
+    word_level: bool = False,
 ) -> str:
     """
     Build a complete ASS document from segment dicts.
 
-    Each segment needs 'start', 'end' and 'text'. One Dialogue line is emitted
-    per non-empty segment, using the given style.
+    With ``word_level`` False (default), one Dialogue is emitted per segment
+    (film / translation styles). With ``word_level`` True, segments that carry a
+    'words' list are rendered as karaoke lines that highlight each word on its
+    own timing (the 'pop' style); segments without words fall back to plain.
 
     Args:
-        segments: List of {'start', 'end', 'text'} (word data, if any, ignored
-                  by this segment-level layout).
+        segments: List of {'start', 'end', 'text'[, 'words']}.
         style:    The StyleSpec preset to render with.
-        width:    Video width  -> PlayResX (so positions map 1:1 to the frame).
+        width:    Video width  -> PlayResX (positions map 1:1 to the frame).
         height:   Video height -> PlayResY.
         title:    Optional script title.
+        word_level: Emit per-word karaoke when word data is present.
 
     Returns:
         The ASS document as a string.
@@ -138,11 +162,18 @@ def build_ass(
     lines.append(_EVENT_FORMAT)
 
     for seg in segments:
-        text = escape_text(str(seg.get("text", "")))
+        words = seg.get("words") if word_level else None
+        if words:
+            # Align the cue to the words themselves for tight highlighting.
+            start = ass_timestamp(float(words[0]["start"]))
+            end = ass_timestamp(float(words[-1]["end"]))
+            text = _karaoke_text(words)
+        else:
+            text = escape_text(str(seg.get("text", "")))
+            start = ass_timestamp(float(seg.get("start", 0.0)))
+            end = ass_timestamp(float(seg.get("end", 0.0)))
         if not text:
             continue
-        start = ass_timestamp(float(seg.get("start", 0.0)))
-        end = ass_timestamp(float(seg.get("end", 0.0)))
         lines.append(
             f"Dialogue: 0,{start},{end},{style.name},,0,0,0,,{text}"
         )
