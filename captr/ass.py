@@ -149,7 +149,10 @@ def build_ass(
     if title:
         lines.append(f"Title: {title}")
     lines.append("ScriptType: v4.00+")
-    lines.append("WrapStyle: 2")
+    # 0 = smart wrapping: libass auto-breaks long lines to fit within the left/
+    # right margins. (2 = no wrapping, which lets long captions overflow the
+    # frame edges.) Balanced lines read best for burned-in subtitles.
+    lines.append("WrapStyle: 0")
     lines.append("ScaledBorderAndShadow: yes")
     lines.append(f"PlayResX: {width}")
     lines.append(f"PlayResY: {height}")
