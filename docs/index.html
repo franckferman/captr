@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>captr</title>
+<meta name="description" content="Burn or mux styled subtitles onto a video. Film, translation and word-animated (karaoke) styles, 9:16 vertical presets, local translation — powered by whispr + libass.">
+<meta property="og:title" content="captr">
+<meta property="og:description" content="Burn or mux styled subtitles onto a video — film, karaoke, translation, vertical. Powered by whispr + libass.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://franckferman.github.io/captr/">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0a0705;
+  --s1:      #120d0b;
+  --s2:      #17110d;
+  --border:  #2a1f16;
+  --dim:     #35281c;
+  --text:    #d8cec4;
+  --muted:   #5a4a3a;
+  --faint:   #241a12;
+  --accent:  #f59e0b;
+  --accent2: #fbbf24;
+  --mono:    'Courier New', Courier, monospace;
+}
+
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); overflow-x: hidden; }
+
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(to bottom,
+    transparent 0px, transparent 3px,
+    rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px);
+  pointer-events: none; z-index: 1000;
+}
+
+.bg-glow {
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 45%,
+    rgba(245,158,11,.04) 0%, transparent 70%);
+  animation: glow-breathe 6s ease-in-out infinite;
+  pointer-events: none; z-index: 0;
+}
+@keyframes glow-breathe { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+.bg-grid {
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.009) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.009) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none; z-index: 0;
+}
+
+.page {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 2.5rem 1.5rem 3.5rem; gap: 2.4rem;
+}
+
+.header { text-align: center; display: flex; flex-direction: column; align-items: center; gap: .85rem; }
+
+.req-pill {
+  display: inline-flex; align-items: center; gap: .5rem;
+  font-size: .58rem; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--muted); border: 1px solid var(--faint);
+  padding: .22rem .75rem; border-radius: 2px;
+}
+.req-pill::before {
+  content: ''; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent); animation: blink 2.8s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+/* caption / karaoke motif: word blocks lit left-to-right, like the pop style */
+.caption {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 9px; border: 1px solid var(--faint); border-radius: 3px;
+  margin: .15rem 0;
+}
+.cap-word {
+  height: 9px; border-radius: 2px; background: var(--dim);
+  animation: cap-sweep 2.6s ease-in-out infinite;
+}
+.cap-word:nth-child(1) { width: 26px; animation-delay: 0s;   }
+.cap-word:nth-child(2) { width: 16px; animation-delay: .18s; }
+.cap-word:nth-child(3) { width: 34px; animation-delay: .36s; }
+.cap-word:nth-child(4) { width: 20px; animation-delay: .54s; }
+.cap-word:nth-child(5) { width: 30px; animation-delay: .72s; }
+.cap-word:nth-child(6) { width: 14px; animation-delay: .90s; }
+@keyframes cap-sweep {
+  0%, 46%, 100% { background: var(--dim); }
+  16%           { background: var(--accent); }
+}
+
+.glitch {
+  font-size: clamp(2.6rem, 8vw, 5.5rem);
+  font-weight: 700; letter-spacing: .04em; text-transform: lowercase;
+  color: var(--text); position: relative; user-select: none;
+}
+.glitch::before, .glitch::after {
+  content: attr(data-text);
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+}
+.glitch::before {
+  color: var(--accent2);
+  clip-path: inset(100% 0 0 0);
+  animation: gb 6s infinite;
+}
+.glitch::after {
+  color: rgba(216,206,196,.8);
+  clip-path: inset(100% 0 0 0);
+  animation: ga 6s infinite;
+}
+@keyframes gb {
+  0%,83%,89%,94%,100% { clip-path:inset(100% 0 0 0); transform:translate(0); opacity:1; }
+  84%   { clip-path:polygon(0 18%,100% 18%,100% 27%,0 27%); transform:translate(-9px,0); }
+  85%   { clip-path:polygon(0 52%,100% 52%,100% 60%,0 60%,0 8%,100% 8%,100% 15%,0 15%); transform:translate(6px,0); }
+  86%   { clip-path:polygon(0 72%,100% 72%,100% 79%,0 79%); transform:translate(-4px,0); }
+  87%   { clip-path:polygon(0 33%,100% 33%,100% 41%,0 41%); transform:translate(8px,0); }
+  88%   { clip-path:inset(100% 0 0 0); transform:translate(0); }
+  92%   { clip-path:polygon(0 22%,100% 22%,100% 30%,0 30%); transform:translate(-5px,0); opacity:.4; }
+  93%   { clip-path:inset(100% 0 0 0); opacity:0; }
+}
+@keyframes ga {
+  0%,83%,89%,94%,100% { clip-path:inset(100% 0 0 0); transform:translate(0); opacity:1; }
+  84.4% { clip-path:polygon(0 61%,100% 61%,100% 70%,0 70%); transform:translate(8px,0); }
+  85.4% { clip-path:polygon(0 28%,100% 28%,100% 36%,0 36%,0 74%,100% 74%,100% 82%,0 82%); transform:translate(-6px,0); }
+  86.4% { clip-path:polygon(0 44%,100% 44%,100% 52%,0 52%); transform:translate(5px,0); }
+  87.4% { clip-path:polygon(0 12%,100% 12%,100% 19%,0 19%); transform:translate(-7px,0); }
+  88.4% { clip-path:inset(100% 0 0 0); transform:translate(0); }
+  92.5% { clip-path:polygon(0 55%,100% 55%,100% 63%,0 63%); transform:translate(4px,0); opacity:.3; }
+  93.5% { clip-path:inset(100% 0 0 0); opacity:0; }
+}
+
+.tagline {
+  font-size: clamp(.62rem, 1.5vw, .78rem);
+  letter-spacing: .18em; text-transform: uppercase;
+  color: var(--muted); text-align: center;
+}
+.tagline .sep { color: #2a2018; margin: 0 .4rem; }
+
+.styles {
+  display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center;
+  margin-top: -.2rem;
+}
+.style-pill {
+  font-size: .58rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted); border: 1px solid var(--faint);
+  padding: .2rem .6rem; border-radius: 2px;
+  cursor: pointer; background: none;
+  font-family: var(--mono);
+  transition: color .2s, border-color .2s;
+}
+.style-pill:hover { color: var(--accent2); border-color: var(--accent); }
+.style-pill.hi { color: var(--accent2); border-color: var(--accent); }
+
+.features { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center; }
+.feat {
+  font-size: .57rem; letter-spacing: .1em; text-transform: uppercase;
+  color: #4a3a28; border: 1px solid #1c140d;
+  padding: .22rem .7rem; border-radius: 2px;
+}
+
+.scenario-block { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 0; }
+
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab {
+  background: none; border: none; cursor: pointer;
+  font-family: var(--mono); font-size: .67rem;
+  letter-spacing: .11em; text-transform: uppercase;
+  color: var(--muted);
+  padding: .65rem 1.1rem;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .15s, border-color .15s;
+  white-space: nowrap; display: flex; align-items: center; gap: .45rem;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.kbd {
+  display: inline-block; font-size: .54rem; color: var(--faint);
+  border: 1px solid var(--faint); padding: .05rem .28rem; border-radius: 2px;
+  transition: color .15s, border-color .15s;
+}
+.tab:hover .kbd, .tab.active .kbd { color: var(--muted); border-color: var(--dim); }
+
+.terminal {
+  background: var(--s1);
+  border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 5px 5px; overflow: hidden;
+  transition: box-shadow .3s;
+}
+.terminal:hover { box-shadow: 0 0 50px rgba(245,158,11,.06), 0 8px 40px rgba(0,0,0,.4); }
+
+.term-bar {
+  background: var(--s2); padding: .55rem 1rem;
+  display: flex; align-items: center; gap: .45rem;
+  border-bottom: 1px solid var(--border);
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; transition: background .25s; }
+.dot-r { background: #1e1220; }
+.dot-y { background: #1e1c10; }
+.dot-g { background: #0e1e14; }
+.terminal:hover .dot-r { background: #c0392b; }
+.terminal:hover .dot-y { background: #c09a2b; }
+.terminal:hover .dot-g { background: #10b981; }
+.term-label { font-size: .61rem; color: var(--muted); margin: 0 auto; padding-right: 28px; letter-spacing: .05em; }
+
+.term-body {
+  padding: 1.1rem 1.4rem;
+  display: flex; align-items: flex-start; gap: .8rem;
+  min-height: 3.4rem; overflow-x: auto;
+}
+.ps { color: var(--accent2); font-size: .95rem; flex-shrink: 0; margin-top: .05rem; user-select: none; }
+
+#cmd-display {
+  font-size: clamp(.67rem, 1.55vw, .81rem); line-height: 1.55; flex: 1;
+  white-space: nowrap; animation: cmd-in .18s ease;
+}
+@keyframes cmd-in { from{opacity:0;transform:translateY(3px)} to{opacity:1;transform:none} }
+
+.cmd  { color: #86efac; }
+.kw   { color: #fcd34d; }
+.str  { color: #fdba74; }
+.flag { color: #fde68a; }
+.env  { color: #c4b5fd; }
+.sep  { color: var(--muted); }
+.op   { color: #6a543a; }
+
+.tab-desc {
+  font-size: .63rem; letter-spacing: .08em;
+  color: var(--muted); margin-top: .7rem; min-height: 1rem;
+  animation: cmd-in .18s ease;
+}
+.tab-desc .hl { color: var(--text); }
+
+.actions { display: flex; gap: .8rem; margin-top: 1.2rem; align-items: center; flex-wrap: wrap; }
+.copy-btn {
+  background: var(--accent); color: #1a1206; border: none;
+  padding: .8rem 2rem; font-family: var(--mono); font-size: .72rem;
+  letter-spacing: .15em; text-transform: uppercase;
+  cursor: pointer; border-radius: 3px; font-weight: 700;
+  transition: background .15s, box-shadow .2s, transform .1s;
+}
+.copy-btn:hover { background: var(--accent2); box-shadow: 0 0 24px rgba(251,191,36,.25); }
+.copy-btn:active { transform: scale(.97); }
+.copy-btn.ok { background: #065f46; color: #fff; box-shadow: 0 0 24px rgba(16,185,129,.2); }
+
+.kbd-hint { font-size: .6rem; letter-spacing: .1em; color: var(--muted); }
+.kbd-hint kbd {
+  font-family: var(--mono); border: 1px solid var(--dim);
+  padding: .1rem .3rem; border-radius: 2px; font-size: .57rem; color: var(--muted);
+  cursor: pointer; transition: color .15s, border-color .15s;
+}
+.kbd-hint kbd:hover { color: var(--text); border-color: var(--border); }
+
+.links { display: flex; gap: 1.2rem; flex-wrap: wrap; justify-content: center; }
+.lnk {
+  font-family: var(--mono); font-size: .65rem;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none;
+  border: 1px solid var(--faint); padding: .5rem 1.1rem; border-radius: 3px;
+  transition: color .15s, border-color .15s;
+}
+.lnk:hover { color: var(--text); border-color: var(--border); }
+
+footer {
+  position: fixed; bottom: 1rem; left: 0; right: 0;
+  text-align: center; font-size: .6rem;
+  letter-spacing: .1em; color: #2a2018;
+  pointer-events: none; z-index: 1;
+}
+footer a { color: #3a2c1e; text-decoration: none; pointer-events: all; transition: color .15s; }
+footer a:hover { color: var(--muted); }
+
+@media (max-width: 700px) {
+  .page { gap: 1.9rem; }
+  .term-label { display: none; }
+  .features { display: none; }
+}
+@media (max-width: 560px) {
+  .page { gap: 1.6rem; padding: 2rem 1rem 3.5rem; }
+  .tab { padding: .6rem .7rem; font-size: .6rem; letter-spacing: .08em; }
+  .term-body { padding: .9rem 1rem; }
+  .actions { flex-direction: column; align-items: stretch; }
+  .copy-btn { width: 100%; padding: .9rem 1rem; }
+  .kbd-hint { display: none; }
+}
+@media (max-width: 380px) {
+  .page { padding: 1.5rem .75rem 3.5rem; gap: 1.4rem; }
+  .glitch { letter-spacing: .01em; }
+  .req-pill { font-size: .53rem; }
+  .tab { padding: .55rem .6rem; font-size: .57rem; }
+  .links { gap: .7rem; }
+  .lnk { padding: .45rem .85rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<div class="page">
+
+  <div class="header">
+    <span class="req-pill">Python &nbsp;&middot;&nbsp; ffmpeg &nbsp;&middot;&nbsp; libass</span>
+
+    <div class="caption" aria-hidden="true">
+      <div class="cap-word"></div><div class="cap-word"></div><div class="cap-word"></div>
+      <div class="cap-word"></div><div class="cap-word"></div><div class="cap-word"></div>
+    </div>
+
+    <h1 class="glitch" data-text="captr">captr</h1>
+    <p class="tagline">Styled Subtitles<span class="sep">&middot;</span>Burn or Mux</p>
+
+    <div class="styles">
+      <button class="style-pill hi" onclick="setStyle(0)">film</button>
+      <button class="style-pill"    onclick="setStyle(1)">pop</button>
+      <button class="style-pill"    onclick="setStyle(2)">translation</button>
+      <button class="style-pill"    onclick="setStyle(3)">vertical</button>
+    </div>
+  </div>
+
+  <div class="features">
+    <span class="feat">Burn (libass)</span>
+    <span class="feat">Soft-mux .mkv</span>
+    <span class="feat">Word-animated karaoke</span>
+    <span class="feat">9:16 vertical presets</span>
+    <span class="feat">Local translation</span>
+  </div>
+
+  <div class="scenario-block">
+    <div class="tabs" role="tablist">
+      <button class="tab active" onclick="setTab(0)"><span class="kbd">1</span> install</button>
+      <button class="tab"        onclick="setTab(1)"><span class="kbd">2</span> burn</button>
+      <button class="tab"        onclick="setTab(2)"><span class="kbd">3</span> soft</button>
+      <button class="tab"        onclick="setTab(3)"><span class="kbd">4</span> translate</button>
+    </div>
+
+    <div class="terminal">
+      <div class="term-bar">
+        <span class="dot dot-r"></span>
+        <span class="dot dot-y"></span>
+        <span class="dot dot-g"></span>
+        <span class="term-label">bash -- captr</span>
+      </div>
+      <div class="term-body">
+        <span class="ps">$&gt;</span>
+        <span id="cmd-display"></span>
+      </div>
+    </div>
+
+    <div id="tab-desc" class="tab-desc"></div>
+
+    <div class="actions">
+      <button class="copy-btn" id="copy-btn" onclick="copyCmd()">Copy</button>
+      <span class="kbd-hint">switch &nbsp;<kbd onclick="setTab(0)">1</kbd><kbd onclick="setTab(1)">2</kbd><kbd onclick="setTab(2)">3</kbd><kbd onclick="setTab(3)">4</kbd></span>
+    </div>
+  </div>
+
+  <div class="links">
+    <a class="lnk" href="https://github.com/franckferman/captr/archive/refs/heads/stable.zip" target="_blank" rel="noopener">Download</a>
+    <a class="lnk" href="https://github.com/franckferman/captr" target="_blank" rel="noopener">Source</a>
+    <a class="lnk" href="https://github.com/franckferman/captr#readme" target="_blank" rel="noopener">Docs</a>
+  </div>
+
+</div>
+
+<footer>
+  <a href="https://github.com/franckferman">Franck FERMAN</a> &nbsp;&middot;&nbsp; AGPL-3.0
+</footer>
+
+<script>
+const STYLES = ['film', 'pop', 'translation', 'film-vertical'];
+const STYLE_LABELS = ['film', 'pop', 'translation', 'vertical'];
+const STYLE_DESC = [
+  `Clean cinematic subtitles: bottom-centred, white with a thin outline and soft shadow. Burned in with <span class="hl">libass</span>, so they play everywhere.`,
+  `Word-by-word <span class="hl">karaoke</span> captions (TikTok / Reels style): each word lights up as it is spoken, using whispr's per-word timings.`,
+  `A lighter caption look tuned for <span class="hl">translated</span> subtitles that sit under the original audio.`,
+  `A <span class="hl">9:16 safe-area</span> preset that keeps captions clear of the top and bottom UI on vertical shorts.`,
+];
+
+let cur = 0;
+let curStyle = 0;
+
+function burnEntry() {
+  const s = STYLES[curStyle];
+  return {
+    raw:  `captr talk.mp4 --style ${s} --lang en`,
+    html: `<span class="cmd">captr</span> <span class="str">talk.mp4</span> <span class="flag">--style</span> <span class="kw">${s}</span> <span class="flag">--lang</span> <span class="str">en</span>`,
+    desc: STYLE_DESC[curStyle],
+  };
+}
+
+const S = [
+  {
+    raw:  `git clone git@github.com:franckferman/captr.git && cd captr && make install`,
+    html: `<span class="cmd">git</span> <span class="kw">clone</span> <span class="str">git@github.com:franckferman/captr.git</span> <span class="op">&amp;&amp;</span> <span class="cmd">cd</span> <span class="str">captr</span> <span class="op">&amp;&amp;</span> <span class="cmd">make</span> <span class="str">install</span>`,
+    desc: `Set up a venv and a whisper backend, and check ffmpeg has <span class="hl">libass</span>. captr drives <span class="hl">whispr</span> for transcription — point <span class="hl">$WHISPR_DIR</span> at a clone (or run <span class="hl">make whispr</span>).`,
+  },
+  burnEntry,
+  {
+    raw:  `captr talk.mp4 --style film --soft`,
+    html: `<span class="cmd">captr</span> <span class="str">talk.mp4</span> <span class="flag">--style</span> <span class="kw">film</span> <span class="flag">--soft</span>`,
+    desc: `Mux the subtitles as a <span class="hl">soft, toggleable track</span> (.mkv) instead of burning them, so the viewer can turn them on or off.`,
+  },
+  {
+    raw:  `captr talk.mp4 --style translation --translate-to en`,
+    html: `<span class="cmd">captr</span> <span class="str">talk.mp4</span> <span class="flag">--style</span> <span class="kw">translation</span> <span class="flag">--translate-to</span> <span class="str">en</span>`,
+    desc: `Transcribe, then <span class="hl">translate locally</span> (whispr / Argos, no online API) and burn the translated captions — e.g. a French video with English subtitles.`,
+  },
+];
+
+function entry(i) {
+  const e = S[i];
+  return typeof e === 'function' ? e() : e;
+}
+
+function setStyle(i) {
+  curStyle = i;
+  document.querySelectorAll('.style-pill').forEach((p, idx) => p.classList.toggle('hi', idx === i));
+  if (cur !== 1) setTab(1); else setTab(1);
+}
+
+function setTab(i) {
+  cur = i;
+  document.querySelectorAll('.tab').forEach((t, idx) => t.classList.toggle('active', idx === i));
+  const e = entry(i);
+  const d = document.getElementById('cmd-display');
+  d.innerHTML = '';
+  void d.offsetWidth;
+  d.innerHTML = e.html;
+  document.getElementById('tab-desc').innerHTML = e.desc;
+}
+
+function copyCmd() {
+  const btn = document.getElementById('copy-btn');
+  navigator.clipboard.writeText(entry(cur).raw).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 1800);
+  });
+}
+
+document.addEventListener('keydown', e => {
+  const n = parseInt(e.key);
+  if (n >= 1 && n <= S.length && !e.ctrlKey && !e.metaKey && !e.altKey) setTab(n - 1);
+});
+
+setTab(0);
+</script>
+</body>
+</html>
