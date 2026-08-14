@@ -75,7 +75,7 @@ captr talk.mp4 --style film --lang en -o subtitled.mp4
 
 # Animated word-by-word captions (TikTok/Reels) -- uses whispr word timings
 captr talk.mp4 --style pop --lang en -o captions.mp4
-# ...with premium word alignment (needs whispr's align extra)
+# ...with higher-accuracy word alignment (needs whispr's align extra)
 captr talk.mp4 --style pop --lang en --word-provider stable_ts -o captions.mp4
 
 # Translate, then subtitle in the target language
@@ -129,4 +129,4 @@ automatically.
 
 ## License
 
-TBD.
+This project is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0).

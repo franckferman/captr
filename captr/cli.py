@@ -27,32 +27,48 @@ from captr.transcribe import default_whispr_dir, transcribe
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the captr command-line parser."""
     p = argparse.ArgumentParser(
         prog="captr",
         description="Burn or mux styled subtitles onto a video (whispr + libass).",
+        epilog=(
+            "examples:\n"
+            "  captr talk.mp4 --style film --lang en\n"
+            "  captr talk.mp4 --style pop --lang en          # word-animated\n"
+            "  captr talk.mp4 --style film --soft            # toggleable track\n"
+            "  captr talk.mp4 --style translation --translate-to en\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    p.add_argument("video", help="input video file")
-    p.add_argument("--style", "-s", default=DEFAULT_STYLE,
-                   choices=sorted(STYLES), help=f"subtitle style (default: {DEFAULT_STYLE})")
-    p.add_argument("--lang", "-l", default=None,
-                   help="ISO 639-1 language code (auto-detect if omitted)")
-    p.add_argument("--backend", "-b", default="faster_whisper",
-                   help="whispr backend (default: faster_whisper)")
-    p.add_argument("--translate-to", default=None,
-                   help="translate subtitles to this ISO 639-1 code (whispr)")
-    p.add_argument("--word-provider", default=None,
-                   choices=["native", "stable_ts", "whisperx"],
-                   help="word-timestamp source for animated styles (default: native)")
-    p.add_argument("--soft", action="store_true",
-                   help="mux subtitles as a soft/toggleable track (.mkv) instead of burning")
-    p.add_argument("--output", "-o", default=None,
-                   help="output path (default: <input>.captr.mp4, or .mkv with --soft)")
-    p.add_argument("--whispr", default=default_whispr_dir(),
-                   help="path to a whispr clone (or set $WHISPR_DIR)")
-    p.add_argument("--ass-only", action="store_true",
-                   help="write the .ass file only; do not burn or mux")
-    p.add_argument("--keep-ass", action="store_true",
-                   help="keep the generated .ass next to the output")
+    p.add_argument("video", metavar="VIDEO", help="input video file")
+
+    style = p.add_argument_group("style")
+    style.add_argument("--style", "-s", default=DEFAULT_STYLE, choices=sorted(STYLES),
+                       help=f"subtitle style (default: {DEFAULT_STYLE})")
+
+    asr = p.add_argument_group("transcription (whispr)")
+    asr.add_argument("--lang", "-l", default=None,
+                     help="ISO 639-1 language code (auto-detected if omitted)")
+    asr.add_argument("--backend", "-b", default="faster_whisper",
+                     help="whispr ASR backend (default: faster_whisper)")
+    asr.add_argument("--translate-to", default=None, metavar="LANG",
+                     help="translate subtitles into this ISO 639-1 code (local, via whispr)")
+    asr.add_argument("--word-provider", default=None,
+                     choices=["native", "stable_ts", "whisperx"],
+                     help="word-timestamp source for animated styles (whispr default: native)")
+    asr.add_argument("--whispr", default=None,
+                     help="path to a whispr clone (default: $WHISPR_DIR, else a sibling ./whispr)")
+
+    out = p.add_argument_group("output")
+    out.add_argument("--soft", action="store_true",
+                     help="mux subtitles as a soft/toggleable track (.mkv) instead of burning")
+    out.add_argument("--output", "-o", default=None,
+                     help="output path (default: <input>.captr.mp4, or .mkv with --soft)")
+    out.add_argument("--ass-only", action="store_true",
+                     help="write the .ass subtitle file only; do not burn or mux")
+    out.add_argument("--keep-ass", action="store_true",
+                     help="keep the generated .ass next to the output")
+
     p.add_argument("--debug", action="store_true", help="verbose logging")
     return p
 
@@ -65,6 +81,9 @@ def main() -> int:
         datefmt="%H:%M:%S",
     )
     log = logging.getLogger("captr")
+
+    # Resolve whispr here (kept out of --help so it never prints a machine path).
+    args.whispr = args.whispr or default_whispr_dir()
 
     video = args.video
     if not Path(video).is_file():
@@ -112,6 +131,8 @@ def main() -> int:
             ass_path = str(ass_out)
             _render(args.soft, video, ass_path, out)
         else:
+            # delete=False: close the handle so ffmpeg can reopen it by path;
+            # removed in the finally below.
             with tempfile.NamedTemporaryFile(
                 "w", suffix=".ass", delete=False, encoding="utf-8"
             ) as fh:

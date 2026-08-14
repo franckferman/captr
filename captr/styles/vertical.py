@@ -43,6 +43,6 @@ POP_VERTICAL = StyleSpec(
     alignment=2,
     margin_l=60,
     margin_r=60,
-    margin_v=320,          # centred-ish in the vertical frame, above UI
+    margin_v=320,          # sits high in the 9:16 frame, clear of the bottom UI
     word_level=True,
 )

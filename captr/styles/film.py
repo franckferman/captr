@@ -5,8 +5,8 @@
 'film' preset — clean cinematic subtitles.
 
 Bottom-centred, restrained sans-serif, white with a thin black outline and a
-soft shadow. The look you expect on a movie or a documentary: legible, out of
-the way, not shouting.
+soft shadow — designed to stay legible without drawing attention away from the
+footage.
 """
 
 from captr.ass import StyleSpec

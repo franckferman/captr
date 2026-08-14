@@ -8,6 +8,8 @@ version = "0.1.0"
 description = "Burn styled subtitles onto a video (whispr + libass)."
 readme = "README.md"
 requires-python = ">=3.9"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
 authors = [{ name = "franckferman" }]
 # Core has no Python deps; ffmpeg and a whispr clone are external requirements.
 dependencies = []

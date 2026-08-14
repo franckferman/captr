@@ -19,15 +19,15 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 
 logger = logging.getLogger(__name__)
 
 
 def default_whispr_dir() -> str:
-    """Best-effort default location of the whispr project."""
-    return os.environ.get("WHISPR_DIR") or str(Path.home() / "maldev" / "whispr")
+    """whispr location: $WHISPR_DIR, else a 'whispr' clone beside the captr repo."""
+    return os.environ.get("WHISPR_DIR") or str(Path(__file__).resolve().parents[2] / "whispr")
 
 
 def build_command(
@@ -42,7 +42,7 @@ def build_command(
     translate_to: Optional[str] = None,
     python_bin: str = sys.executable,
     prefix: str = "captr",
-) -> list:
+) -> List[str]:
     """Construct the whispr CLI command (returned as an argv list)."""
     main_py = str(Path(whispr_dir) / "main.py")
     cmd = [

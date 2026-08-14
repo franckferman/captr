@@ -2,18 +2,14 @@
 # captr/ass.py
 
 """
-ASS Subtitle Generation
+ASS subtitle generation.
 
-Description:
-Builds Advanced SubStation Alpha (.ass) documents from transcript segments.
-ASS is what libass (and thus ffmpeg) renders, and it is the format that lets a
-style preset control font, colour, position, outline and -- later -- per-word
-karaoke/animation.
+Builds Advanced SubStation Alpha (.ass) documents from transcript segments. ASS
+is what libass (and thus ffmpeg) renders, and it is the format that lets a style
+preset control font, colour, position, outline and per-word karaoke animation.
 
 A StyleSpec describes one preset's [V4+ Styles] line. build_ass() lays out the
 [Script Info]/[V4+ Styles]/[Events] sections and emits one Dialogue per segment.
-
-Created By  : Franck FERMAN
 """
 
 from dataclasses import dataclass
@@ -34,7 +30,7 @@ class StyleSpec:
     primary_colour: str = "&H00FFFFFF"   # text colour (and karaoke 'sung' colour)
     secondary_colour: str = "&H000000FF"  # karaoke upcoming-word colour
     outline_colour: str = "&H00000000"   # black outline
-    back_colour: str = "&H64000000"      # semi-transparent shadow box
+    back_colour: str = "&H64000000"      # semi-transparent drop shadow
     bold: int = 0                        # -1 = bold, 0 = normal
     italic: int = 0
     outline: float = 2.0
