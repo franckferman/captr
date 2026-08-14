@@ -29,7 +29,7 @@ captr's core has **no Python dependencies**. It needs, on the system:
 - a **whispr** clone, pointed to with `--whispr` or `$WHISPR_DIR`, plus a whispr
   backend (e.g. `pip install faster-whisper`)
 
-## Quick start (how to test it)
+## Quick start
 
 With the Makefile (venv + captr + a whisper backend + an ffmpeg/libass check):
 
