@@ -168,7 +168,7 @@ body::before {
 
 .scenario-block { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 0; }
 
-.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; }
 .tab {
   background: none; border: none; cursor: pointer;
   font-family: var(--mono); font-size: .67rem;
@@ -214,7 +214,7 @@ body::before {
 .term-body {
   padding: 1.1rem 1.4rem;
   display: flex; align-items: flex-start; gap: .8rem;
-  min-height: 3.4rem; overflow-x: auto;
+  min-height: 3.4rem; overflow-x: auto; overflow-y: hidden;
 }
 .ps { color: var(--accent2); font-size: .95rem; flex-shrink: 0; margin-top: .05rem; user-select: none; }
 
