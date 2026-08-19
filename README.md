@@ -2,7 +2,7 @@
 
 # captr
 
-**Burn styled subtitles onto a video — powered by [whispr](https://github.com/franckferman/whispr) + libass.**
+**Burn styled subtitles onto a video, powered by [whispr](https://github.com/franckferman/whispr) and libass.**
 
 </div>
 
@@ -18,7 +18,7 @@ with ffmpeg/libass.
 video ──▶ whispr (ASR + optional translation, word timings) ──▶ captr (ASS style) ──▶ ffmpeg/libass ──▶ subtitled video
 ```
 
-captr does **not** re-implement speech recognition — that is whispr's job. captr
+captr does **not** re-implement speech recognition; that is whispr's job. captr
 owns what whispr doesn't: **the look**.
 
 ## Requirements
@@ -97,8 +97,8 @@ Or as a module: `python -m captr.cli video.mp4 --style film`.
 
 | Preset | Look |
 |---|---|
-| `film` | bottom-centred, clean sans-serif, white + thin outline — cinematic, out of the way |
-| `translation` | like `film`, a touch smaller/dimmer — a discreet translated overlay |
+| `film` | bottom-centred, clean sans-serif, white + thin outline (cinematic, out of the way) |
+| `translation` | like `film`, a touch smaller/dimmer, a discreet translated overlay |
 | `pop` | big bold centred, **word-by-word animated** (karaoke), active word highlighted |
 | `film-vertical` | `film` raised into the 9:16 safe area |
 | `pop-vertical` | `pop`, sized and raised for vertical video |
@@ -110,17 +110,17 @@ automatically.
 
 ## How it works
 
-- `captr/transcribe.py` — drives whispr as a subprocess, returns its JSON
+- `captr/transcribe.py`: drives whispr as a subprocess, returns its JSON
   (segments, optional word timings, optional translation).
-- `captr/ass.py` — `StyleSpec` + `build_ass()` render segments to an ASS document.
-- `captr/styles/` — the presets.
-- `captr/burn.py` — ffmpeg/libass burn (`-vf ass=...`), audio stream-copied.
-- `captr/cli.py` — orchestrates the three.
+- `captr/ass.py`: `StyleSpec` + `build_ass()` render segments to an ASS document.
+- `captr/styles/`: the presets.
+- `captr/burn.py`: ffmpeg/libass burn (`-vf ass=...`), audio stream-copied.
+- `captr/cli.py`: orchestrates the three.
 
 ## Roadmap
 
 - [x] `film` / `translation` presets (segment-level), end-to-end burn
-- [x] `pop` — animated word-by-word captions, consuming whispr's
+- [x] `pop`: animated word-by-word captions, consuming whispr's
       `--word-timestamps` (native or stable_ts/whisperx alignment)
 - [x] soft-subtitle output (`--soft`, mux `.ass` into Matroska instead of burning)
 - [x] vertical (9:16) safe-area presets (`film-vertical`, `pop-vertical`)

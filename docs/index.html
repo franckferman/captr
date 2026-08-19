@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>captr</title>
-<meta name="description" content="Burn or mux styled subtitles onto a video. Film, translation and word-animated (karaoke) styles, 9:16 vertical presets, local translation — powered by whispr + libass.">
+<meta name="description" content="Burn or mux styled subtitles onto a video. Film, translation and word-animated (karaoke) styles, 9:16 vertical presets, local translation, powered by whispr + libass.">
 <meta property="og:title" content="captr">
-<meta property="og:description" content="Burn or mux styled subtitles onto a video — film, karaoke, translation, vertical. Powered by whispr + libass.">
+<meta property="og:description" content="Burn or mux styled subtitles onto a video: film, karaoke, translation, vertical. Powered by whispr + libass.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://franckferman.github.io/captr/">
 <style>
@@ -400,9 +400,9 @@ function burnEntry() {
 
 const S = [
   {
-    raw:  `git clone git@github.com:franckferman/captr.git && cd captr && make install`,
-    html: `<span class="cmd">git</span> <span class="kw">clone</span> <span class="str">git@github.com:franckferman/captr.git</span> <span class="op">&amp;&amp;</span> <span class="cmd">cd</span> <span class="str">captr</span> <span class="op">&amp;&amp;</span> <span class="cmd">make</span> <span class="str">install</span>`,
-    desc: `Set up a venv and a whisper backend, and check ffmpeg has <span class="hl">libass</span>. captr drives <span class="hl">whispr</span> for transcription — point <span class="hl">$WHISPR_DIR</span> at a clone (or run <span class="hl">make whispr</span>).`,
+    raw:  `git clone https://github.com/franckferman/captr.git && cd captr && make install`,
+    html: `<span class="cmd">git</span> <span class="kw">clone</span> <span class="str">https://github.com/franckferman/captr.git</span> <span class="op">&amp;&amp;</span> <span class="cmd">cd</span> <span class="str">captr</span> <span class="op">&amp;&amp;</span> <span class="cmd">make</span> <span class="str">install</span>`,
+    desc: `Set up a venv and a whisper backend, and check ffmpeg has <span class="hl">libass</span>. captr drives <span class="hl">whispr</span> for transcription; point <span class="hl">$WHISPR_DIR</span> at a clone (or run <span class="hl">make whispr</span>).`,
   },
   burnEntry,
   {
@@ -413,7 +413,7 @@ const S = [
   {
     raw:  `captr talk.mp4 --style translation --translate-to en`,
     html: `<span class="cmd">captr</span> <span class="str">talk.mp4</span> <span class="flag">--style</span> <span class="kw">translation</span> <span class="flag">--translate-to</span> <span class="str">en</span>`,
-    desc: `Transcribe, then <span class="hl">translate locally</span> (whispr / Argos, no online API) and burn the translated captions — e.g. a French video with English subtitles.`,
+    desc: `Transcribe, then <span class="hl">translate locally</span> (whispr / Argos, no online API) and burn the translated captions, e.g. a French video with English subtitles.`,
   },
 ];
 
