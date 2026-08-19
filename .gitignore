@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+venv/
+.ruff_cache/
+# captr outputs
+*.captr.mp4
+*.ass
+!examples/*.ass
